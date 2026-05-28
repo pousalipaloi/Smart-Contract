@@ -1,0 +1,80 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract BlockShareSentinel {
+    struct ShareRecord {
+        string  id;
+        string  title;
+        string  receiver;
+        string  sender;
+        string  classification;
+        uint256 byteSize;
+        uint256 createdAt;
+        string  contentDigest;
+        string  ciphertext;
+        string  iv;
+        string  salt;
+    }
+
+    struct LedgerBlock {
+        uint256 index;
+        uint256 timestamp;
+        string  previousHash;
+        string  recordId;
+        string  sender;
+        string  receiver;
+        string  classification;
+        string  contentDigest;
+        string  nonce;
+        string  hash;
+    }
+
+    ShareRecord[]  private _records;
+    LedgerBlock[]  private _ledger;
+    address public  owner;
+    uint256 public  version;
+
+    event ShareAdded(uint256 indexed blockIndex, string recordId, address indexed submitter, string receiver, string classification);
+    event ChainReset(address indexed by, uint256 atVersion);
+
+    error OnlyOwner();
+    error EmptyRecord();
+    error BlockIndexMismatch();
+    error InvalidPreviousHash();
+
+    constructor() { owner = msg.sender; }
+
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert OnlyOwner();
+        _;
+    }
+
+    function addShare(ShareRecord calldata record, LedgerBlock calldata block_) external {
+        if (bytes(record.id).length == 0) revert EmptyRecord();
+        uint256 expectedIndex = _ledger.length + 1;
+        if (block_.index != expectedIndex) revert BlockIndexMismatch();
+        string memory expectedPrev = _ledger.length == 0
+            ? "0000000000000000000000000000000000000000000000000000000000000000"
+            : _ledger[_ledger.length - 1].hash;
+        if (keccak256(bytes(block_.previousHash)) != keccak256(bytes(expectedPrev)))
+            revert InvalidPreviousHash();
+        _records.push(record);
+        _ledger.push(block_);
+        version++;
+        emit ShareAdded(block_.index, record.id, msg.sender, record.receiver, record.classification);
+    }
+
+    function reset() external onlyOwner {
+        delete _records;
+        delete _ledger;
+        version++;
+        emit ChainReset(msg.sender, version);
+    }
+
+    function getRecordCount() external view returns (uint256) { return _records.length; }
+    function getLedgerCount() external view returns (uint256) { return _ledger.length; }
+    function getAllRecords() external view returns (ShareRecord[] memory) { return _records; }
+    function getAllBlocks() external view returns (LedgerBlock[] memory) { return _ledger; }
+    function getRecord(uint256 i) external view returns (ShareRecord memory) { return _records[i]; }
+    function getBlock(uint256 i) external view returns (LedgerBlock memory) { return _ledger[i]; }
+}
