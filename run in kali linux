@@ -1,0 +1,112 @@
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
+sudo apt-get install -y nodejs
+node -v && npm -v
+
+cd blockshare-sentinel
+npm install
+
+
+npx hardhat compile
+
+
+OPEN IN SECOND TERMINAL
+npx hardhat node
+
+IN FIRST TERMINAL
+npx hardhat run scripts/deploy.js --network localhost
+
+npx hardhat test
+python3 -m http.server 5173 --directory frontend
+
+firefox http://localhost:5173
+
+
+Field             Value
+Network name     Hardhat Local
+RPC URL         http://127.0.0.1:8545
+Chain ID         31337
+Currency           ETH
+
+
+
+IF SERVER ISSUES THEN
+
+# Python 3 alternative
+python3 -m http.server 5173 -d frontend
+
+# Or use npx serve
+npx serve frontend -p 5173
+
+
+
+IF METAMASK HAVE PROBLEM
+
+
+# Allow the port through if ufw is active
+sudo ufw allow 5173
+sudo ufw allow 8545
+
+
+RESTART
+
+# Kill any leftover node process on port 8545
+sudo fuser -k 8545/tcp
+
+# Then re-run from step 4
+npx hardhat node
+
+pwd
+ls -la
+ls -la scripts/
+mkdir -p scripts
+# Check if it's somewhere else first
+find . -name "deploy.js" 2>/dev/null
+
+RECREATE IF HAVE ISSUES
+cat > scripts/deploy.js << 'EOF'
+const hre = require("hardhat");
+const fs  = require("fs");
+const path = require("path");
+
+const FRONTEND = path.join(__dirname, "../frontend");
+
+async function main() {
+  const [deployer] = await hre.ethers.getSigners();
+  console.log("Deploying with account:", deployer.address);
+
+  const Factory  = await hre.ethers.getContractFactory("BlockShareSentinel");
+  const contract = await Factory.deploy();
+  await contract.waitForDeployment();
+
+  const address = await contract.getAddress();
+  console.log("✅ Deployed to:", address);
+
+  fs.mkdirSync(FRONTEND, { recursive: true });
+
+  const deployment = {
+    address,
+    network:    hre.network.name,
+    chainId:    (await hre.ethers.provider.getNetwork()).chainId.toString(),
+    deployedAt: new Date().toISOString(),
+    deployer:   deployer.address
+  };
+
+  fs.writeFileSync(path.join(FRONTEND, "deployment.json"), JSON.stringify(deployment, null, 2));
+  console.log("📄 deployment.json written to frontend/");
+
+  const artifact = await hre.artifacts.readArtifact("BlockShareSentinel");
+  fs.writeFileSync(path.join(FRONTEND, "abi.json"), JSON.stringify(artifact.abi, null, 2));
+  console.log("📄 abi.json written to frontend/");
+}
+
+main().catch((err) => { console.error(err); process.exit(1); });
+EOF
+
+PROJECT STRUCTURE
+
+find . -not -path './node_modules/*' -not -path './.git/*' | sort
+
+
+
+
+
