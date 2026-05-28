@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BlockShare Sentinel</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="wallet-overlay" id="walletOverlay">
+      <div class="wallet-modal">
+        <div class="brand-mark large">BS</div>
+        <h2>BlockShare Sentinel</h2>
+        <p class="wallet-desc">
+          Encrypted data shares are submitted as on-chain transactions via your
+          connected wallet. The immutable ledger lives on the EVM smart contract.
+        </p>
+        <div id="overlayStatus" class="overlay-status"></div>
+        <button class="primary-button wide" id="overlayConnectBtn" type="button">
+          Connect MetaMask
+        </button>
+        <p class="wallet-hint">
+          Requires a local Hardhat node + deployed contract.<br />
+          Run <code>npm run dev</code> to start everything.
+        </p>
+      </div>
+    </div>
+
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">BS</div>
+          <div>
+            <strong>BlockShare</strong>
+            <span>Sentinel</span>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="Primary">
+          <a class="active" href="#overview">Overview</a>
+          <a href="#share">Share Data</a>
+          <a href="#database">Realtime DB</a>
+          <a href="#ledger">Ledger</a>
+        </nav>
+
+        <div class="node-card" id="walletCard">
+          <span class="status-dot" id="walletDot" aria-hidden="true"></span>
+          <div>
+            <strong id="nodeName">Not connected</strong>
+            <span id="syncStatus">Connect wallet to begin</span>
+          </div>
+        </div>
+
+        <button class="ghost-button sidebar-connect" id="sidebarConnectBtn" type="button">
+          Connect wallet
+        </button>
+      </aside>
+
+      <main>
+        <header class="topbar" id="overview">
+          <div>
+            <p class="eyebrow">Smart contract data sharing console</p>
+            <h1>Blockchain-backed realtime data exchange</h1>
+          </div>
+          <div class="top-actions">
+            <button class="ghost-button" id="verifyChainBtn" type="button">Verify chain</button>
+            <button class="danger-button" id="resetDemoBtn" type="button">Reset</button>
+          </div>
+        </header>
+
+        <section class="metrics-grid" aria-label="Security metrics">
+          <article class="metric">
+            <span>Encrypted shares</span>
+            <strong id="shareCount">0</strong>
+          </article>
+          <article class="metric">
+            <span>Ledger blocks</span>
+            <strong id="blockCount">0</strong>
+          </article>
+          <article class="metric">
+            <span>Chain status</span>
+            <strong id="chainStatus">Pending</strong>
+          </article>
+          <article class="metric">
+            <span>Contract version</span>
+            <strong id="draftStatus">—</strong>
+          </article>
+        </section>
+
+        <section class="workspace-grid">
+          <section class="panel share-panel" id="share">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">On-chain encrypted share</p>
+                <h2>Create secure data share</h2>
+              </div>
+              <span class="badge" id="typingBadge">No active input</span>
+            </div>
+
+            <form id="shareForm" class="share-form">
+              <div class="field-row">
+                <label>
+                  Data title
+                  <input id="dataTitle" name="title" type="text"
+                         placeholder="Threat report, audit file, IoT stream" required />
+                </label>
+                <label>
+                  Receiver address
+                  <input id="receiverAddress" name="receiver" type="text"
+                         placeholder="0xA4E9...node" required />
+                </label>
+              </div>
+
+              <div class="field-row">
+                <label>
+                  Classification
+                  <select id="classification" name="classification">
+                    <option>Internal</option>
+                    <option>Confidential</option>
+                    <option>Restricted</option>
+                    <option>Critical</option>
+                  </select>
+                </label>
+                <label>
+                  Encryption passphrase
+                  <input id="passphrase" name="passphrase" type="password"
+                         placeholder="Minimum 8 characters" minlength="8" required />
+                </label>
+              </div>
+
+              <label>
+                Live data payload
+                <textarea id="liveInput" name="payload" rows="7"
+                          placeholder="Type the data to share." required></textarea>
+              </label>
+
+              <div class="input-meta">
+                <span id="charCount">0 characters</span>
+                <span id="lastInputAt">Not typed yet</span>
+              </div>
+
+              <div class="live-preview" aria-live="polite">
+                <div class="preview-label">Live preview</div>
+                <pre id="livePreview">Waiting for secure payload input...</pre>
+              </div>
+
+              <div class="form-actions">
+                <button class="primary-button" type="submit">Encrypt &amp; submit transaction</button>
+                <button class="ghost-button" id="loadSampleBtn" type="button">Sample</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel visual-panel" aria-label="Network activity">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Live network</p>
+                <h2>Node flow</h2>
+              </div>
+              <span class="badge" id="eventPulse">Stable</span>
+            </div>
+            <canvas id="networkCanvas" width="680" height="420"
+                    aria-label="Animated blockchain network"></canvas>
+            <div class="contract-strip" id="contractStrip">
+              <span class="contract-label">Contract</span>
+              <span class="contract-addr" id="contractAddr">—</span>
+            </div>
+          </section>
+        </section>
+
+        <section class="data-grid">
+          <section class="panel" id="database">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">On-chain database</p>
+                <h2>Shared records</h2>
+              </div>
+              <span class="badge" id="dbVersion">v0</span>
+            </div>
+            <div class="record-list" id="recordList"></div>
+          </section>
+
+          <section class="panel" id="ledger">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Blockchain ledger</p>
+                <h2>Immutable blocks</h2>
+              </div>
+              <span class="badge" id="latestHash">No hash</span>
+            </div>
+            <div class="ledger-list" id="ledgerList"></div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <script src="./app.js" defer></script>
+  </body>
+</html>
